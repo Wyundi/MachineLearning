@@ -2,7 +2,7 @@
 # -*- coding:utf-8 -*-
 # Author:Wyundi
 
-# Univariate Linear Regression
+# Multivariate Linear Regression
 
 import imp
 from sklearn import datasets
@@ -11,45 +11,44 @@ import matplotlib.pylab as plt
 import time
 
 class LinearRegression():
-    def __init__(self, x, y):
-        self.data_x = x
+    def __init__(self, X, y):
+        self.m = X.shape[0]                     # number of examples
+        self.n = X.shape[1]                     # number of features
+        self.x_extra = np.ones([self.m, 1])
+        self.data_X = np.column_stack((self.x_extra, X))
         self.data_y = y
-        self.__theta0 = 0
-        self.__theta1 = 0
+        self.__theta = np.random.rand(self.m, 1)
         self.__alpha = 0.01
-        self.h = np.random.rand(x.shape[0], 1)
+        self.h = np.random.rand(self.m, 1)
         self.J = 0
-        self.D0 = 0
-        self.D1 = 0
-        self.temp0 = 0
-        self.temp1 = 0
+        self.J_iteration = np.zeros([1,1])
+        self.D = np.random.rand(self.n, 1)
+        self.temp = np.random.rand(self.m, 1)
 
-    def getParam(self):
-        print(self.__theta0, self.__theta1)
-
-    def modifyParam(self, alpha):
+    def modifyParam(alpha):
         self.__alpha = alpha
 
     def Hypothesis(self):
-        for i in range(self.data_x.shape[0]):
-            self.h[i] = self.__theta0 + self.__theta1 * self.data_x[i]
+        for i in range(self.m):
+            for j in range(self.n):
+                self.h[i] += self.__theta.T[0][j] * self.data_X[i][j]
 
     def CostFunction(self):
-        for i in range(self.data_x.shape[0]):
-            self.J += 1/(2*self.data_x.shape[0]) * np.power(((self.__theta0 + self.__theta1 * self.data_x[i]) - self.data_y[0][i]), 2)
-    
+        self.Hypothesis()
+        for i in range(self.n):
+            self.J += 1/(2*self.m) * np.power((self.h[i] - self.data_y[0][i]), 2)
+
     def Derivative(self):
-        for i in range(self.data_x.shape[0]):
-            self.D0 += 1/self.data_x.shape[0] * ((self.__theta0 + self.__theta1 * self.data_x[i]) - self.data_y[0][i])
-            self.D1 += 1/self.data_x.shape[0] * ((self.__theta0 + self.__theta1 * self.data_x[i]) - self.data_y[0][i]) * self.data_x[i]
+        self.Hypothesis()
+        for i in range(self.n):
+            for j in range(self.m):
+                self.D[i] += 1/self.m * (self.h[j] - self.data_y[0][j]) * self.data_X[j][i]
 
     def UpdateParam(self):
         self.Derivative()
-        self.temp0 = self.__theta0 - self.__alpha * self.D0
-        self.temp1 = self.__theta0 - self.__alpha * self.D1
-        self.__theta0 = self.temp0
-        self.__theta1 = self.temp1
-
+        self.temp = self.__theta - self.__alpha * self.D.T
+        self.__theta = self.temp
+    
 class Visualize():
     # 数据可视化
     def plot(self, x, y):
@@ -82,11 +81,7 @@ def main():
     # print(data.shape)             ->(442, 10)
     # print(target.shape)           ->(1, 442))
 
-    # Only one feature  单一变量
-    diabetes_X = diabetes.data[:, np.newaxis, 2]
-    # print(diabetes_X.shape)       ->(442,1)
-
-    x = diabetes_X
+    x = data
     y = target
 
     # 将数据分为训练集和测试集
@@ -97,28 +92,17 @@ def main():
     print(y_train.shape, y_test.shape)
 
     LR = LinearRegression(x_train, y_train)
+    PLT = Visualize()
+
     LR.Hypothesis()
     print(LR.h.shape)                           # ->(422, 1)
 
     LR.CostFunction()
-    print(LR.J)                                 # ->int
+    print(LR.J)
 
-    LR.Derivative()
-    print(LR.D0, LR.D1)
-
-    # LR.getParam()
-    tic = time.time()
     for i in range(1000):
-        LR.UpdateParam()
-        #print(LR.temp0, LR.temp1)
-        #print(LR.D0, LR.D1)
-        # LR.getParam()
-    toc = time.time()
-    print(str(1000*(toc-tic)) + 'ms')
+        LR.Derivative()
 
-    PLT = Visualize()
-
-    LR.Hypothesis()
     PLT.plot(x_train, LR.h)
 
     PLT.scatter(x_train, y_train.T)
@@ -126,8 +110,5 @@ def main():
     PLT.cross()
     PLT.show()
 
-
-
-########
-main()####
-########
+######
+main()
