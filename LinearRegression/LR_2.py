@@ -23,16 +23,16 @@ class GetData():
         self.TrainTest()
 
     def FeatureScaling(self):
-        max = np.max(self.__data, axis = 1)
-        min = np.min(self.__data, axis = 1)
+        max = np.max(self.__data, axis = 0)
+        min = np.min(self.__data, axis = 0)
         for i in range(self.__data.shape[1]):
             for j in range(self.__data.shape[0]):
                 self.__data[j, i] = self.__data[j, i]/(max[i] - min[i])
 
     def MeanNormalization(self):
-        max = np.max(self.__data, axis = 1)
-        min = np.min(self.__data, axis = 1)
-        mean = np.mean(self.__data, axis = 1)
+        max = np.max(self.__data, axis = 0)
+        min = np.min(self.__data, axis = 0)
+        mean = np.mean(self.__data, axis = 0)
         for i in range(self.__data.shape[1]):
             for j in range(self.__data.shape[0]):
                 self.__data[j, i] = (self.__data[j, i] - mean[i])/(max[i] - min[i])
@@ -69,13 +69,15 @@ class LinearRegression():
         self.m = self.data_X.shape[0]
         self.n = self.data_X.shape[1]
         self.__theta = np.random.rand(self.n, 1)
-        self.__alpha = 0.001
+        self.__alpha = 0.000001
         self.iteration = 10000
         self.h = np.random.rand(self.m, 1)
         self.J = 0
         self.J_iteration = np.zeros(self.iteration)
         self.D = np.random.rand(self.n, 1)
         self.temp = np.random.rand(self.n, 1)
+        print("alpha = ", self.__alpha)
+        print("iteration = ", self.iteration)
 
     def modifyParam(alpha):
         self.__alpha = alpha
@@ -85,6 +87,7 @@ class LinearRegression():
 
     def CostFunction(self):
         self.Hypothesis()
+        self.J = 0
         for i in range(self.n):
             self.J += 1/(2*self.m) * np.power((self.h[i] - self.data_y[0][i]), 2)
 
@@ -126,8 +129,8 @@ class Visualize():
 def main():
     Data = GetData()
     Data.oneFeaturn(2)
-    # Data.FeatureScaling()
-    Data.MeanNormalization()
+    Data.FeatureScaling()
+    # Data.MeanNormalization()
     x = Data.getData()
     y = Data.getTarget()
 
@@ -135,23 +138,22 @@ def main():
     x_train, x_test = Data.getTrainData(), Data.getTestData()
     y_train, y_test = Data.getTrainTarget(), Data.getTestTarget()
 
-    print("x_train/test:", x_train.shape, x_test.shape)
-    print("y_train/test:", y_train.shape, y_test.shape)
+    # print("x_train/test:", x_train.shape, x_test.shape)
+    # print("y_train/test:", y_train.shape, y_test.shape)
 
     ### 测试数据
     LR = LinearRegression(x_train, y_train)
     PLT = Visualize()
     
     LR.Hypothesis()
-    print("h.shape:", LR.h.shape)                           # ->(422, 1)
-    print("h:", LR.h)
+    # print("h.shape:", LR.h.shape)                           # ->(422, 1)
+    # print("h:", LR.h)
 
     LR.CostFunction()
     print("CostFunction J:", LR.J)
 
     LR.Derivative()
-    print(LR.D.shape)
-
+    
     ### 回归
     tic = time.time()
 
@@ -159,12 +161,14 @@ def main():
         LR.UpdateParam()
         LR.CostFunction()
         LR.J_iteration[i] = LR.J
-        if LR.J_iteration[i-1] - LR.J_iteration[i] == 0.0001:
+        if LR.J_iteration[i-1] - LR.J_iteration[i] == 0.01:
             print(i)
 
     toc = time.time()
     print(str(1000*(toc-tic)) + 'ms')
 
+    print("J.min: ", np.min(LR.J_iteration))
+    
     # PLT.plot(x_train, LR.h)
     # PLT.scatter(x_train, y_train.T)
 
