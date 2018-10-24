@@ -65,17 +65,19 @@ class LinearRegression():
         self.n = X.shape[1]                     # number of features
         self.x_extra = np.ones([self.m, 1])
         self.data_X = np.column_stack((self.x_extra, X))
-        self.data_y = y
+        self.data_y = y.T
+        print(self.data_y.shape)
         self.m = self.data_X.shape[0]
         self.n = self.data_X.shape[1]
+
         self.__theta = np.random.rand(self.n, 1)
-        self.__alpha = 0.000001
+        self.__alpha = 0.01
         self.iteration = 10000
-        self.h = np.random.rand(self.m, 1)
+
+        self.h = np.zeros([self.m, 1])
         self.J = 0
-        self.J_iteration = np.zeros(self.iteration)
-        self.D = np.random.rand(self.n, 1)
-        self.temp = np.random.rand(self.n, 1)
+        self.D = np.zeros([self.n, 1])
+        self.temp = np.zeros([self.n, 1])
         print("alpha = ", self.__alpha)
         print("iteration = ", self.iteration)
 
@@ -87,21 +89,28 @@ class LinearRegression():
 
     def CostFunction(self):
         self.Hypothesis()
-        self.J = 0
-        for i in range(self.n):
-            self.J += 1/(2*self.m) * np.power((self.h[i] - self.data_y[0][i]), 2)
+        self.J = 1/(2*self.m) * np.sum(np.power((self.h - self.data_y), 2))        
+
+    def drawCostFunction(self):
+        print("motherfucker")
+
+        '''
+        J_img = Visualize()
+        J_img.plot(self.thetaRange, self.J_imgData)
+        J_img.cross
+        J_img.show()
+        '''
 
     def Derivative(self):
         self.Hypothesis()
+        print(self.data_X.shape)
         for i in range(self.n):
-            for j in range(self.m):
-                self.D[i] += 1/self.m * (self.h[j] - self.data_y[0][j]) * self.data_X[j][i]
+            self.D[i] = 1/(2*self.m) * np.sum((self.h - self.data_y) * self.data_X[:][i])
 
     def UpdateParam(self):
         self.Derivative()
         self.temp = self.__theta - self.__alpha * self.D
-        self.__theta = self.temp
-        # print(self.__theta)        
+        self.__theta = self.temp       
     
 class Visualize():
     # 数据可视化
@@ -144,7 +153,11 @@ def main():
     ### 测试数据
     LR = LinearRegression(x_train, y_train)
     PLT = Visualize()
-    
+
+    LR.CostFunction()
+    LR.Derivative()
+
+    '''
     LR.Hypothesis()
     # print("h.shape:", LR.h.shape)                           # ->(422, 1)
     # print("h:", LR.h)
@@ -160,9 +173,6 @@ def main():
     for i in range(LR.iteration):
         LR.UpdateParam()
         LR.CostFunction()
-        LR.J_iteration[i] = LR.J
-        if LR.J_iteration[i-1] - LR.J_iteration[i] == 0.01:
-            print(i)
 
     toc = time.time()
     print(str(1000*(toc-tic)) + 'ms')
@@ -172,12 +182,9 @@ def main():
     # PLT.plot(x_train, LR.h)
     # PLT.scatter(x_train, y_train.T)
 
-    x_axis = np.arange(LR.iteration)
-    PLT.plot(x_axis, LR.J_iteration)
-
     # PLT.axis()
     PLT.cross()
     PLT.show()
-
+    '''
 ######
 main()
