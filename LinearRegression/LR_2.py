@@ -79,11 +79,9 @@ class LinearRegression():
         self.J = 0
         self.J0 = 0
         self.J_dv = 0
-        self.J_img = np.zeros([12000, 1])
 
         self.D = np.zeros([self.n, 1])
         self.temp = np.zeros([self.n, 1])
-        print("alpha = ", self.__alpha)
 
     def modifyParam(self, alpha):
         self.__alpha = alpha
@@ -101,30 +99,13 @@ class LinearRegression():
         self.J_dv = self.J0 - self.J     
 
     def drawCostFunction(self):
-        print(self.__theta.shape)
-        self.theta1 = np.arange(-3000, 3000, 0.5)
-        self.theta2 = np.arange(-3000, 3000, 0.5)
-        self.theta1 = self.theta1.reshape([12000, 1])
-        self.theta2 = self.theta2.reshape([12000, 1])
-        self.theta0 = np.column_stack((self.theta1, self.theta2))
-        print(self.theta0.shape)
-        
-        for i in range(12000):
-            for j in range(12000):
-                self.__theta = self.theta0[i]
-                self.CostFunction()
-                print(self.J)
-                self.J_img[i] = self.J
-        
-        PLT = Visualize()
-        PLT.plot(self.theta2, self.J_img)
-        PLT.cross()
-        PLT.show()
 
+        print("motherfucker")
+        
     def Derivative(self):
         self.CostFunction()
         for i in range(self.n):
-            self.D[i] = 1/(2*self.m) * np.sum((self.h - self.data_y) * self.data_X[:][i])
+            self.D[i] = 1/self.m * np.sum((self.h - self.data_y) * self.data_X[:, i].reshape(self.m, 1))
 
     def UpdateParam(self):
         self.Derivative()
@@ -138,6 +119,16 @@ class Visualize():
     
     def scatter(self, x, y):
         plt.scatter(x, y, color = 'green', label = 'point')
+
+    def plot_surface(self, x, y, z):
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.plot_surface(x, y, z, rstride=1,cstride=1,cmap=plt.get_cmap('rainbow'))
+
+    def contourf(self, x, y, z):
+        fig = plt.figure()
+        ax = Axes3D(fig)
+        ax.contourf(X,Y,Z,zdir='z',offset=-2,cmap='rainbow')
     
     def axis(self, x0, x1, y0, y1):
         plt.xlim(x0, x1)
@@ -173,6 +164,9 @@ def main():
     LR = LinearRegression(x_train, y_train)
     PLT = Visualize()
 
+    # LR.drawCostFunction()
+
+    
     i = 0
 
     LR.modifyParam(0.1)
@@ -183,65 +177,20 @@ def main():
         LR.UpdateParam()
         theta = LR.getTheta().T
         print(LR.J)
-        print(theta)
-        print(LR.D.T)
-        if LR.D.any() <= 0.001:
-            break
-
-    '''
-    LR.CostFunction()
-    i = 0
-    while(True):
-        i += 1
-        LR.UpdateParam()
-        LR.CostFunction()
-        print(LR.J_dv)
-        if LR.J_dv <= 0.0000001:
+        print(theta, LR.D.T)
+        if LR.J_dv <= 0.001:
             break
     
     print(i)
 
-    PLT.plot(x_train, LR.h)
-    PLT.scatter(x_train, y_train.T)
-
-    # PLT.plot(x_train, LR.h)
-    # PLT.scatter(x_test, y_test)
-
-    # PLT.axis()
-    PLT.cross()
-    PLT.show()
-    '''
-
-######
-
-    '''
-    LR.Hypothesis()
-    # print("h.shape:", LR.h.shape)                           # ->(422, 1)
-    # print("h:", LR.h)
-
-    LR.CostFunction()
-    print("CostFunction J:", LR.J)
-
-    LR.Derivative()
-    
-    ### 回归
-    tic = time.time()
-
-    for i in range(LR.iteration):
-        LR.UpdateParam()
-        LR.CostFunction()
-
-    toc = time.time()
-    print(str(1000*(toc-tic)) + 'ms')
-
-    print("J.min: ", np.min(LR.J_iteration))
-    
     # PLT.plot(x_train, LR.h)
     # PLT.scatter(x_train, y_train.T)
 
+    PLT.plot(x_train, LR.h)
+    PLT.scatter(x_test, y_test)
+
     # PLT.axis()
     PLT.cross()
     PLT.show()
-    '''
-######
+
 main()
