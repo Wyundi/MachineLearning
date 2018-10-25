@@ -9,6 +9,7 @@ from sklearn import datasets
 import numpy as np
 import matplotlib.pylab as plt
 import time
+from mpl_toolkits.mplot3d import Axes3D
 
 class GetData():
     def __init__(self):
@@ -72,38 +73,56 @@ class LinearRegression():
 
         self.__theta = np.random.rand(self.n, 1)
         self.__alpha = 0.01
-        self.iteration = 10000
 
         self.h = np.zeros([self.m, 1])
+
         self.J = 0
+        self.J0 = 0
+        self.J_dv = 0
+        self.J_img = np.zeros([12000, 1])
+
         self.D = np.zeros([self.n, 1])
         self.temp = np.zeros([self.n, 1])
         print("alpha = ", self.__alpha)
-        print("iteration = ", self.iteration)
 
-    def modifyParam(alpha):
+    def modifyParam(self, alpha):
         self.__alpha = alpha
+
+    def getTheta(self):
+        return self.__theta
 
     def Hypothesis(self):
         self.h = np.dot(self.data_X, self.__theta)
 
     def CostFunction(self):
         self.Hypothesis()
-        self.J = 1/(2*self.m) * np.sum(np.power((self.h - self.data_y), 2))        
+        self.J0 = self.J
+        self.J = 1/(2*self.m) * np.sum(np.power((self.h - self.data_y), 2))
+        self.J_dv = self.J0 - self.J     
 
     def drawCostFunction(self):
-        print("motherfucker")
-
-        '''
-        J_img = Visualize()
-        J_img.plot(self.thetaRange, self.J_imgData)
-        J_img.cross
-        J_img.show()
-        '''
+        print(self.__theta.shape)
+        self.theta1 = np.arange(-3000, 3000, 0.5)
+        self.theta2 = np.arange(-3000, 3000, 0.5)
+        self.theta1 = self.theta1.reshape([12000, 1])
+        self.theta2 = self.theta2.reshape([12000, 1])
+        self.theta0 = np.column_stack((self.theta1, self.theta2))
+        print(self.theta0.shape)
+        
+        for i in range(12000):
+            for j in range(12000):
+                self.__theta = self.theta0[i]
+                self.CostFunction()
+                print(self.J)
+                self.J_img[i] = self.J
+        
+        PLT = Visualize()
+        PLT.plot(self.theta2, self.J_img)
+        PLT.cross()
+        PLT.show()
 
     def Derivative(self):
-        self.Hypothesis()
-        print(self.data_X.shape)
+        self.CostFunction()
         for i in range(self.n):
             self.D[i] = 1/(2*self.m) * np.sum((self.h - self.data_y) * self.data_X[:][i])
 
@@ -154,8 +173,46 @@ def main():
     LR = LinearRegression(x_train, y_train)
     PLT = Visualize()
 
+    i = 0
+
+    LR.modifyParam(0.1)
+    
+    LR.UpdateParam()
+    while(True):
+        i += 1
+        LR.UpdateParam()
+        theta = LR.getTheta().T
+        print(LR.J)
+        print(theta)
+        print(LR.D.T)
+        if LR.D.any() <= 0.001:
+            break
+
+    '''
     LR.CostFunction()
-    LR.Derivative()
+    i = 0
+    while(True):
+        i += 1
+        LR.UpdateParam()
+        LR.CostFunction()
+        print(LR.J_dv)
+        if LR.J_dv <= 0.0000001:
+            break
+    
+    print(i)
+
+    PLT.plot(x_train, LR.h)
+    PLT.scatter(x_train, y_train.T)
+
+    # PLT.plot(x_train, LR.h)
+    # PLT.scatter(x_test, y_test)
+
+    # PLT.axis()
+    PLT.cross()
+    PLT.show()
+    '''
+
+######
 
     '''
     LR.Hypothesis()
