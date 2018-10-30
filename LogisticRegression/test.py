@@ -4,14 +4,18 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 
 class Visualize():
     # 数据可视化
     def plot(self, x, y):
         plt.plot(x, y, color = 'blue', label = 'plot')
     
-    def scatter(self, x, y):
+    def scatter_green(self, x, y):
         plt.scatter(x, y, color = 'green', label = 'point')
+
+    def scatter_red(self, x, y):
+        plt.scatter(x, y, color = 'red', label = 'point')
 
     def plot_surface(self, x, y, z):
         fig = plt.figure()
@@ -42,14 +46,16 @@ def sigmoid(z):
     return 1 / (1 + np.exp(-z))
 
 def main():
-    x = np.arange(0,11).reshape(11,1)
-    y = np.array([[0,0,0,0,1,0,0,1,1,1,1]]).T
-    x_e = np.ones([11, 1])
-    X = np.column_stack((x_e, x))
-    theta = np.zeros([2, 1])
+    x1 = np.array([1,1,1,2,2,3,3,4,4,5,5,5])
+    x2 = np.array([1,2,3,1,2,1,3,3,2,3,2,1])
+    y = np.array([[0,0,0,0,0,0,1,1,1,1,1,1]]).T
+    x_e = np.ones([12, 1])
+    X = np.column_stack((x_e, x1, x2))
+    theta = np.zeros([3, 1])
     alpha = 0.01
     J = 0
 
+    
     while(True):
         h = sigmoid(np.dot(X, theta))
         Cost = - y*(np.log(h)) - (1-y)*(np.log(1-h))
@@ -58,20 +64,33 @@ def main():
         print(J)
         J_dv = np.fabs(J-J0)
 
-        D = np.zeros([2,1])
+        D = np.zeros([3,1])
 
-        for i in range(2):
-            D[i] = 1/11 * np.sum((h - y) * X[:, i].reshape(11, 1))
+        for i in range(3):
+            D[i] = 1/12 * np.sum((h - y) * X[:, i].reshape(12, 1))
 
         theta = theta - alpha * D
 
-        if J_dv <= 0.000000000000001:
+        if J_dv <= 0.00001:
             break
 
+    img = np.dot(X, theta)
+    print(theta)
     PLT = Visualize()
-    PLT.scatter(x, y)
-    PLT.plot(x, h)
-    PLT.cross()
+    
+    for i in range(y.shape[0]):
+        if y[i] == 0:
+            PLT.scatter_green(x1[i], x2[i])
+        else:
+            PLT.scatter_red(x1[i], x2[i])
+    
+    x1_t = np.array([1,2,3,4,5])
+    x2_t = - (theta[0] + theta[1] * x1_t) / theta[2]
+
+    PLT.plot(x1_t, x2_t)
+
+    # PLT.cross()
     PLT.show()
+
 
 main()
