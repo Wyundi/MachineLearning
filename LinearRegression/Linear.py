@@ -109,8 +109,11 @@ class LinearRegression():
 
     def UpdateParam(self):
         self.Derivative()
+        '''
         self.temp = self.__theta - self.__alpha * self.D
-        self.__theta = self.temp       
+        self.__theta = self.temp
+        '''
+        self.__theta = self.__theta - self.__alpha * self.D  
     
 class Visualize():
     # 数据可视化
