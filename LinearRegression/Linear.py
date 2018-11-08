@@ -183,7 +183,7 @@ def main():
     while(True):
         i += 1
         LR.UpdateParam()
-        theta = LR.getTheta().T
+        # theta = LR.getTheta().T
         # print(LR.J)
         # print(theta, LR.D.T)
         if abs(LR.J_dv) <= 0.001:
