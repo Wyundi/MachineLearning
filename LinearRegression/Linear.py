@@ -11,17 +11,26 @@ import matplotlib.pylab as plt
 import time
 from mpl_toolkits.mplot3d import Axes3D
 
+# 分割数据的模块，把数据集分为训练集和测试集
+from sklearn.model_selection import train_test_split
+
 class GetData():
     def __init__(self):
         # diabetes datasets
-        self.__diabetes = datasets.load_diabetes()
-        self.__data = self.__diabetes.data
-        self.__target = np.array([self.__diabetes.target])
+        self.__datasets = datasets.load_diabetes()
+        self.__data = self.__datasets.data
+        self.__target = np.array([self.__datasets.target])
         self.TrainTest()
 
     def oneFeaturn(self, n):
         self.__data = self.__data[:, np.newaxis, n]
         self.TrainTest()
+        return self.__data
+
+    def multiFeaturn(self, n, m):
+        self.__data = self.__data[:, n:m]
+        self.TrainTest()
+        return self.__data
 
     def FeatureScaling(self):
         max = np.max(self.__data, axis = 0)
@@ -39,8 +48,8 @@ class GetData():
                 self.__data[j, i] = (self.__data[j, i] - mean[i])/(max[i] - min[i])
 
     def TrainTest(self):
-        self.__data_train, self.__data_test = self.__data[:-20], self.__data[-20:]
-        self.__target_train, self.__target_test = self.__target[:,:-20], self.__target[:,-20:]
+        self.__data_train, self.__data_test, self.__target_train, self.__target_test = \
+        train_test_split(self.__data, self.__target.T, test_size=0.05)
 
     def getData(self):
         return self.__data
@@ -55,19 +64,19 @@ class GetData():
         return self.__data_test
 
     def getTrainTarget(self):
-        return self.__target_train
+        return self.__target_train.T
 
     def getTestTarget(self):
-        return self.__target_test
+        return self.__target_test.T
 
-class LinearRegression():
+class Linear():
     def __init__(self, X, y):
         self.m = X.shape[0]                     # number of examples
         self.n = X.shape[1]                     # number of features
         self.x_extra = np.ones([self.m, 1])
         self.data_X = np.column_stack((self.x_extra, X))
         self.data_y = y.T
-        print(self.data_y.shape)
+        
         self.m = self.data_X.shape[0]
         self.n = self.data_X.shape[1]
 
@@ -109,10 +118,6 @@ class LinearRegression():
 
     def UpdateParam(self):
         self.Derivative()
-        '''
-        self.temp = self.__theta - self.__alpha * self.D
-        self.__theta = self.temp
-        '''
         self.__theta = self.__theta - self.__alpha * self.D  
     
 class Visualize():
@@ -164,7 +169,7 @@ def main():
     # print("y_train/test:", y_train.shape, y_test.shape)
 
     ### 测试数据
-    LR = LinearRegression(x_train, y_train)
+    LR = Linear(x_train, y_train)
     PLT = Visualize()
 
     # LR.drawCostFunction()
@@ -179,9 +184,9 @@ def main():
         i += 1
         LR.UpdateParam()
         theta = LR.getTheta().T
-        print(LR.J)
-        print(theta, LR.D.T)
-        if LR.J_dv <= 0.001:
+        # print(LR.J)
+        # print(theta, LR.D.T)
+        if abs(LR.J_dv) <= 0.001:
             break
     
     print(i)
