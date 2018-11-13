@@ -54,17 +54,15 @@ def main():
     theta = np.zeros([3, 1])
     alpha = 0.01
     J = 0
-
+    D = np.zeros([3,1])
     
     while(True):
         h = sigmoid(np.dot(X, theta))
-        Cost = - y*(np.log(h)) - (1-y)*(np.log(1-h))
+        Loss = - y*(np.log(h)) - (1-y)*(np.log(1-h))
         J0 = J
-        J = 1/11 * np.sum(Cost)
+        J = 1/11 * np.sum(Loss)
         print(J)
         J_dv = np.fabs(J-J0)
-
-        D = np.zeros([3,1])
 
         for i in range(3):
             D[i] = 1/12 * np.sum((h - y) * X[:, i].reshape(12, 1))
