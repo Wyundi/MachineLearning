@@ -54,16 +54,17 @@ def NeuralNet(X, y):
     n = X.shape[1]
     Layer = np.array([4, 6, 6, 4, 1])
 
-    W1 = np.random.rand(n, Layer[0])
-    b1 = np.random.rand(m, 1)
-    W2 = np.random.rand(Layer[0], Layer[1])
-    b2 = np.random.rand(m, 1)
-    W3 = np.random.rand(Layer[1], Layer[2])
-    b3 = np.random.rand(m, 1)
-    W4 = np.random.rand(Layer[2], Layer[3])
-    b4 = np.random.rand(m, 1)
-    W5 = np.random.rand(Layer[3], Layer[4])
-    b5 = np.random.rand(m, 1)
+    W1 = np.random.randn(n, Layer[0])
+    W2 = np.random.randn(Layer[0], Layer[1])
+    W3 = np.random.randn(Layer[1], Layer[2])
+    W4 = np.random.randn(Layer[2], Layer[3])
+    W5 = np.random.randn(Layer[3], Layer[4])
+
+    B1 = np.random.randn(Layer[0], 1)
+    B2 = np.random.randn(Layer[1], 1)
+    B3 = np.random.randn(Layer[2], 1)
+    B4 = np.random.randn(Layer[3], 1)
+    B5 = np.random.randn(Layer[4], 1)
 
     Z1 = np.zeros([m, Layer[0]])
     A1 = np.zeros([m, Layer[0]])
@@ -79,19 +80,21 @@ def NeuralNet(X, y):
     Loss = np.zeros([m, 1])
     J = 0
 
-    alpha = 0.01
+    alpha = 0.03
+    i = 0
     
     while(True):
+        i = i + 1
         # 正向传播
-        Z1 = np.dot(X, W1) + b1
+        Z1 = np.dot(X, W1) + B1.T
         A1 = ReLU(Z1)
-        Z2 = np.dot(A1, W2) + b2
+        Z2 = np.dot(A1, W2) + B2.T
         A2 = ReLU(Z2)
-        Z3 = np.dot(A2, W3) + b3
+        Z3 = np.dot(A2, W3) + B3.T
         A3 = ReLU(Z3)
-        Z4 = np.dot(A3, W4) + b4
+        Z4 = np.dot(A3, W4) + B4.T
         A4 = ReLU(Z4)
-        Z5 = np.dot(A4, W5) + b5
+        Z5 = np.dot(A4, W5) + B5.T
         A5 = Sigmoid(Z5)
 
         A5 = np.where(A5 == 1, A5 - 0.005, A5)
@@ -101,68 +104,70 @@ def NeuralNet(X, y):
 
         J0 = J
         J = 1/m * np.sum(Loss)
-        # print(J)
+        print(J)
         J_dv = np.fabs(J-J0)
-        
+
         # dx 和 x 的维度相同
         dZ5 = (A5 - y) * (A5*(1-A5))
         dW5 = 1/m * np.dot(A4.T, dZ5)
-        db5 = 1/m * np.sum(dZ5, axis = 1, keepdims = True)
+        dB5 = 1/m * np.sum(dZ5, axis = 0, keepdims = True).T
 
         dZ4 = np.dot(dZ5, W5.T) * np.where(Z4<0, 0, 1)
         dW4 = 1/m * np.dot(A3.T, dZ4)
-        db4 = 1/m * np.sum(dZ4, axis = 1, keepdims = True)
+        dB4 = 1/m * np.sum(dZ4, axis = 0, keepdims = True).T
 
         dZ3 = np.dot(dZ4, W4.T) * np.where(Z3<0, 0, 1)
         dW3 = 1/m * np.dot(A2.T, dZ3)
-        db3 = 1/m * np.sum(dZ3, axis = 1, keepdims = True)
+        dB3 = 1/m * np.sum(dZ3, axis = 0, keepdims = True).T
 
         dZ2 = np.dot(dZ3, W3.T) * np.where(Z2<0, 0, 1)
         dW2 = 1/m * np.dot(A1.T, dZ2)
-        db2 = 1/m * np.sum(dZ2, axis = 1, keepdims = True)
+        dB2 = 1/m * np.sum(dZ2, axis = 0, keepdims = True).T
 
         dZ1 = np.dot(dZ2, W2.T) * np.where(Z1<0, 0, 1)
         dW1 = 1/m * np.dot(X.T, dZ1)
-        db1 = 1/m * np.sum(dZ1, axis = 1, keepdims = True)
+        dB1 = 1/m * np.sum(dZ1, axis = 0, keepdims = True).T
 
         #参数更新
         W5 = W5 - alpha * dW5
-        b5 = b5 - alpha * db5
+        B5 = B5 - alpha * dB5
         W4 = W4 - alpha * dW4
-        b4 = b4 - alpha * db4
+        B4 = B4 - alpha * dB4
         W3 = W3 - alpha * dW3
-        b3 = b3 - alpha * db3
+        B3 = B3 - alpha * dB3
         W2 = W2 - alpha * dW2
-        b2 = b2 - alpha * db2
+        B2 = B2 - alpha * dB2
         W1 = W1 - alpha * dW1
-        b1 = b1 - alpha * db1
+        B1 = B1 - alpha * dB1
 
-        if J_dv <= 0.00000001:
+
+        if J_dv <= 0.0000001:
             break
-
-    return W5, b5, W4, b4, W3, b3, W2, b2, W1, b1
+    
+    print("i = ", i)
+    return W5, B5, W4, B4, W3, B3, W2, B2, W1, B1
 
 def main():
-    x, y = make_moons(n_samples=2000,noise=0.1)
+    x, y = make_moons(n_samples=1000,noise=0.1)
     # x, y = make_circles(n_samples=1000,factor = 0.7,noise=0.05)
 
     y = y.reshape([x.shape[0], 1])
 
-    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.5)
+    x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2)
 
     # print(x.shape, y.shape)
 
-    W5, b5, W4, b4, W3, b3, W2, b2, W1, b1 = NeuralNet(x_train, y_train)
+    W5, B5, W4, B4, W3, B3, W2, B2, W1, B1 = NeuralNet(x_train, y_train)
     
-    Z1 = np.dot(x_test, W1) + b1
+    Z1 = np.dot(x_test, W1) + B1.T
     A1 = ReLU(Z1)
-    Z2 = np.dot(A1, W2) + b2
+    Z2 = np.dot(A1, W2) + B2.T
     A2 = ReLU(Z2)
-    Z3 = np.dot(A2, W3) + b3
+    Z3 = np.dot(A2, W3) + B3.T
     A3 = ReLU(Z3)
-    Z4 = np.dot(A3, W4) + b4
+    Z4 = np.dot(A3, W4) + B4.T
     A4 = ReLU(Z4)
-    Z5 = np.dot(A4, W5) + b5
+    Z5 = np.dot(A4, W5) + B5.T
     A5 = Sigmoid(Z5)
 
     m = 0
@@ -173,8 +178,8 @@ def main():
             A5[i] = 0
         if A5[i] != y_test[i]:
             m = m + 1
-        print(A5[i], '  ', y_test[i])
-    print(m)
+        # print(A5[i], '  ', y_test[i])
+    print("m = ", m)
     
     PLT = Visualize()
 
