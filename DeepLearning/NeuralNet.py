@@ -52,17 +52,29 @@ def ReLU(z):
 def NeuralNet(X, y):
     m = X.shape[0]
     n = X.shape[1]
-    Layer = np.array([3, 1])
+    Layer = np.array([4, 6, 6, 4, 1])
 
     W1 = np.random.rand(n, Layer[0])
     b1 = np.random.rand(m, 1)
     W2 = np.random.rand(Layer[0], Layer[1])
     b2 = np.random.rand(m, 1)
+    W3 = np.random.rand(Layer[1], Layer[2])
+    b3 = np.random.rand(m, 1)
+    W4 = np.random.rand(Layer[2], Layer[3])
+    b4 = np.random.rand(m, 1)
+    W5 = np.random.rand(Layer[3], Layer[4])
+    b5 = np.random.rand(m, 1)
 
     Z1 = np.zeros([m, Layer[0]])
     A1 = np.zeros([m, Layer[0]])
     Z2 = np.zeros([m, Layer[1]])
     A2 = np.zeros([m, Layer[1]])
+    Z3 = np.zeros([m, Layer[2]])
+    A3 = np.zeros([m, Layer[2]])
+    Z4 = np.zeros([m, Layer[3]])
+    A4 = np.zeros([m, Layer[3]])
+    Z5 = np.zeros([m, Layer[4]])
+    A5 = np.zeros([m, Layer[4]])
 
     Loss = np.zeros([m, 1])
     J = 0
@@ -74,10 +86,18 @@ def NeuralNet(X, y):
         Z1 = np.dot(X, W1) + b1
         A1 = ReLU(Z1)
         Z2 = np.dot(A1, W2) + b2
-        A2 = Sigmoid(Z2)
+        A2 = ReLU(Z2)
+        Z3 = np.dot(A2, W3) + b3
+        A3 = ReLU(Z3)
+        Z4 = np.dot(A3, W4) + b4
+        A4 = ReLU(Z4)
+        Z5 = np.dot(A4, W5) + b5
+        A5 = Sigmoid(Z5)
+
+        A5 = np.where(A5 == 1, A5 - 0.005, A5)
 
         # 反向传播
-        Loss = - y*(np.log(A2)) - (1-y)*(np.log(1-A2))
+        Loss = - y*(np.log(A5)) - (1-y)*(np.log(1-A5))
 
         J0 = J
         J = 1/m * np.sum(Loss)
@@ -85,7 +105,19 @@ def NeuralNet(X, y):
         J_dv = np.fabs(J-J0)
         
         # dx 和 x 的维度相同
-        dZ2 = (A2 - y) * (A2*(1-A2))
+        dZ5 = (A5 - y) * (A5*(1-A5))
+        dW5 = 1/m * np.dot(A4.T, dZ5)
+        db5 = 1/m * np.sum(dZ5, axis = 1, keepdims = True)
+
+        dZ4 = np.dot(dZ5, W5.T) * np.where(Z4<0, 0, 1)
+        dW4 = 1/m * np.dot(A3.T, dZ4)
+        db4 = 1/m * np.sum(dZ4, axis = 1, keepdims = True)
+
+        dZ3 = np.dot(dZ4, W4.T) * np.where(Z3<0, 0, 1)
+        dW3 = 1/m * np.dot(A2.T, dZ3)
+        db3 = 1/m * np.sum(dZ3, axis = 1, keepdims = True)
+
+        dZ2 = np.dot(dZ3, W3.T) * np.where(Z2<0, 0, 1)
         dW2 = 1/m * np.dot(A1.T, dZ2)
         db2 = 1/m * np.sum(dZ2, axis = 1, keepdims = True)
 
@@ -94,44 +126,56 @@ def NeuralNet(X, y):
         db1 = 1/m * np.sum(dZ1, axis = 1, keepdims = True)
 
         #参数更新
+        W5 = W5 - alpha * dW5
+        b5 = b5 - alpha * db5
+        W4 = W4 - alpha * dW4
+        b4 = b4 - alpha * db4
+        W3 = W3 - alpha * dW3
+        b3 = b3 - alpha * db3
         W2 = W2 - alpha * dW2
         b2 = b2 - alpha * db2
         W1 = W1 - alpha * dW1
         b1 = b1 - alpha * db1
 
-        if J_dv <= 0.000001:
+        if J_dv <= 0.00000001:
             break
-    
-    return W1, W2, b1, b2
+
+    return W5, b5, W4, b4, W3, b3, W2, b2, W1, b1
 
 def main():
-    # x, y = make_moons(n_samples=20000,noise=0.1)
-    x, y = make_circles(n_samples=1000,factor = 0.7,noise=0.05)
+    x, y = make_moons(n_samples=2000,noise=0.1)
+    # x, y = make_circles(n_samples=1000,factor = 0.7,noise=0.05)
 
     y = y.reshape([x.shape[0], 1])
 
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.5)
 
-    print(x.shape, y.shape)
+    # print(x.shape, y.shape)
 
-    W1, W2, b1, b2 = NeuralNet(x_train, y_train)
-
+    W5, b5, W4, b4, W3, b3, W2, b2, W1, b1 = NeuralNet(x_train, y_train)
+    
     Z1 = np.dot(x_test, W1) + b1
     A1 = ReLU(Z1)
     Z2 = np.dot(A1, W2) + b2
-    A2 = Sigmoid(Z2)
+    A2 = ReLU(Z2)
+    Z3 = np.dot(A2, W3) + b3
+    A3 = ReLU(Z3)
+    Z4 = np.dot(A3, W4) + b4
+    A4 = ReLU(Z4)
+    Z5 = np.dot(A4, W5) + b5
+    A5 = Sigmoid(Z5)
 
     m = 0
     for i in range(x_test.shape[0]):
-        if A2[i] >= 0.5:
-            A2[i] = 1
+        if A5[i] >= 0.5:
+            A5[i] = 1
         else:
-            A2[i] = 0
-        if A2[i] != y_test[i]:
+            A5[i] = 0
+        if A5[i] != y_test[i]:
             m = m + 1
-        print(A2[i], '  ', y_test[i])
+        print(A5[i], '  ', y_test[i])
     print(m)
-
+    
     PLT = Visualize()
 
     for i in range(y.shape[0]):
