@@ -147,15 +147,8 @@ def NeuralNet(X, y):
     print("i = ", i)
     return W5, B5, W4, B4, W3, B3, W2, B2, W1, B1
 
-def main():
-    x, y = make_moons(n_samples=1000,noise=0.1)
-    # x, y = make_circles(n_samples=1000,factor = 0.7,noise=0.05)
-
-    y = y.reshape([x.shape[0], 1])
-
+def loop(x, y):
     x_train, x_test, y_train, y_test = train_test_split(x, y, test_size = 0.2)
-
-    # print(x.shape, y.shape)
 
     W5, B5, W4, B4, W3, B3, W2, B2, W1, B1 = NeuralNet(x_train, y_train)
     
@@ -180,7 +173,22 @@ def main():
             m = m + 1
         # print(A5[i], '  ', y_test[i])
     print("m = ", m)
-    
+    return m
+
+def main():
+    x, y = make_moons(n_samples=1000,noise=0.1)
+    # x, y = make_circles(n_samples=1000,factor = 0.7,noise=0.05)
+
+    y = y.reshape([x.shape[0], 1])
+
+    # print(x.shape, y.shape)
+
+    time = 1
+    while(loop(x, y) >= 5):
+        time = time + 1
+        print('motherfucker')
+    print('time = ', time)
+    '''
     PLT = Visualize()
 
     for i in range(y.shape[0]):
@@ -191,5 +199,6 @@ def main():
 
     PLT.cross()
     PLT.show()
+    '''
 
 main()
