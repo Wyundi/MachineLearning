@@ -10,9 +10,6 @@ import time
 from sklearn.model_selection import train_test_split
 import cv2 as cv
 
-# 读取图片
-img = cv.imread('cat.jpg', 1)
-
 # 显示图片  (imshow + waitKey)
 
 '''
@@ -20,7 +17,7 @@ plt.imshow(img, cmap = 'gray', interpolation = 'bicubic')
 plt.xticks([]), plt.yticks([])  # to hide tick values on X and Y axis
 plt.show()
 '''
-def imshow():
+def imshow(img):
     cv.imshow('Cat', img)
     k = cv.waitKey(0) & 0xFF
     if k == ord('q'):
@@ -30,7 +27,12 @@ def imshow():
 
     cv.destroyAllWindows()      # 销毁全部图片
 
+def CNN(img):
+    print(img.shape)
+
 def main():
-    
+    # 读取图片
+    img = cv.imread('cat.jpg', 1)
+    CNN(img)
 
 main()
