@@ -119,11 +119,11 @@ def Softmax_Loss(A, target):
     return Loss
 
 def Conv(img, ParamConv):
-    print('Conv')
+    # print('Conv')
 
     padding, kernal, b_conv, stride = ParamConv
 
-    print("img for Conv:\n", img[0][0])
+    # print("img[0]:\n", img[0][0])
 
     # Parameter
     m, f_in, img_h, img_w = np.shape(img)
@@ -136,7 +136,7 @@ def Conv(img, ParamConv):
     # Padding
     img_pad = np.pad(img, ((0, 0), (0, 0), (padding, padding), (padding, padding)), 'constant')
 
-    print("img_pad:\n", img_pad[0][0])
+    # print("img_pad:\n", img_pad[0][0])
 
     # im2col
     img2col_h = n_h * n_w
@@ -147,12 +147,11 @@ def Conv(img, ParamConv):
         for j in range(n_w):
             img_im2col[..., i*n_h+j, :] = img_pad[..., i:i+k_h, j:j+k_w].reshape(m, f_in, k_h*k_w)
 
-    print("img_im2col:\n", img_im2col[0][0])
-    # print(kernal[0][0])
+    # print("img_im2col:\n", img_im2col[0][0])
 
     kernal = kernal.reshape(f_in, f_out, k_h*k_w, 1)
 
-    print("kernal:\n", kernal[0])
+    # print("kernal:\n", kernal[0][0])
 
     img_conv = np.zeros((m, f_out, n_h, n_w))
 
@@ -160,12 +159,12 @@ def Conv(img, ParamConv):
         for j in range(f_out):
             img_conv[:, j] = np.dot(img_im2col[:, i], kernal[i, j]).reshape(m, n_h, n_w) + b_conv[j]
 
-    print("b_conv:\n", b_conv)
-    print("img_conv:\n", img_conv[0][0])
+    # print("b_conv:\n", b_conv)
+    # print("img_conv:\n", img_conv[0][0])
 
     return img_conv, img_im2col
 
-def Conv_bw(img_bw, ParamConv_bw):
+def Conv_bw(img_bw, img_im2col, ParamConv_bw):
     # print('Conv_bw')
 
     # print(img_bw[0])
@@ -173,7 +172,11 @@ def Conv_bw(img_bw, ParamConv_bw):
     padding, kernal, b_conv, stride, alpha = ParamConv_bw
     kernal_shape = np.shape(kernal)
     b_conv_shape = np.shape(b_conv)
+    img_bw_shape = np.shape(img_bw)
     f_in, f_out, k_h, k_w = kernal_shape
+    m, i_out, ib_h, ib_w = img_bw_shape
+    dK = np.zeros((m, f_in, f_out, k_h, k_w))
+    db = np.zeros(b_conv.shape)
 
     kernal_r = kernal
 
@@ -189,16 +192,38 @@ def Conv_bw(img_bw, ParamConv_bw):
     # print(kernal_r[0][0])
 
     ParamConv = padding, kernal_r, b_conv, stride
-    img_Convbw, img_im2col = Conv(img_bw, ParamConv)
+    img_Convbw, img_im2colbw = Conv(img_bw, ParamConv)
 
-    # kernal = kernal.reshape(kernal_shape)
-    dK = np.sum(img_im2col, axis = (0, 2)).reshape((f_out, k_h, k_w))
-    db = np.sum(img_bw, axis = (0, 2, 3)).reshape(b_conv_shape)
-
-    # print(3*dK[0])
+    img_bw = img_bw.reshape(m, i_out, ib_h * ib_w, 1)
+    img_im2col_T = img_im2col.transpose(0, 1, 3, 2)
+    kernal_c = kernal.reshape(f_in, f_out, k_h * k_w, 1)
 
     for i in range(f_in):
-        kernal[i] = kernal[i] - alpha * dK
+        for j in range(f_out):
+            for mm in range(m):
+                dK[mm, i, j] = np.dot(img_im2col_T[mm, i], img_bw[mm, j]).reshape(k_h, k_w)
+
+    # print(img_im2col_T[0][0])
+    # print(img_bw[0][0])
+    dK = 1/m * np.sum(dK, axis = 0).reshape(kernal_shape)
+    # print("dK:\n", dK[0][0])
+    # print("kernal:\n", kernal[0][0])
+
+    # kernal = kernal.reshape(kernal_shape)
+    # dK = np.sum(img_im2colbw, axis = (0, 2)).reshape((f_out, k_h, k_w))
+    # print(np.sum(img_im2colbw, axis = (0, 2)).shape, np.sum(img_im2col, axis = (0, 2)).shape, kernal.shape)
+    # temp0 = np.sum(img_im2colbw, axis = (0, 2)).reshape(1, f_out, k_h, k_w)
+    # temp1 =  np.sum(img_im2col, axis = (0, 2)).reshape(f_in, 1, k_h, k_w)
+    # dK = temp0 * temp1
+    # print(dK.shape)
+    # dK = np.dot(np.sum(img_bw, axis = 0).reshape(f_out, ib_h * ib_w), np.sum(img_im2col, axis = (0, 2))).reshape((f_out, k_h, k_w))
+    
+    # img_bw_reshape = img_bw.transpose(1, 2, 3, 0).reshape(f_in, -1)
+    # dK = img_bw_reshape.dot(img_im2col.T).reshape(kernal_shape)
+    
+    db = np.sum(img_bw, axis = (0, 2, 3)).reshape(b_conv_shape)
+
+    kernal = kernal - alpha * dK
     b_conv = b_conv - alpha * db
 
     # print(kernal[0][0])
@@ -208,10 +233,11 @@ def Conv_bw(img_bw, ParamConv_bw):
     return img_Convbw, cache
 
 def Pooling(img, stride):
-    print('Pooling')
+    # print('Pooling')
 
-    print("img_shape:\n", img.shape)
-    print("img:\n", img)
+    # print("img_shape:\n", img.shape)
+    # print("img[0]:\n", img[0][0])
+
     in_shape = np.shape(img)
     m, f, img_h, img_w = in_shape
     s = stride
@@ -228,7 +254,7 @@ def Pooling(img, stride):
             pool = img[..., i*s:(i+1)*s, j*s:(j+1)*s]
             img_pool[..., i, j] = np.max(pool, axis = (2,3))
 
-    print("img_pool:\n", img_pool)
+    # print("img_pool:\n", img_pool[0][0])
 
     return img_pool
 
@@ -274,14 +300,15 @@ def FC(img, ParamFC):
     A2 = ReLU(Z2)
     Z3 = np.dot(A2, W3) + B3.T
     A3 = Softmax(Z3)
-    
-    print("W1:\n", W1[0])
+
+    print("Z3:\n", Z3[0])
+    print("A3:\n", A3[0])
     
     cache = (Z1, A1, Z2, A2, Z3, A3)
     return cache
 
 def FC_bw(img, target, ParamFC, ParamFC_rt, ParamFC_bw):
-    # print('FC_bw')
+    print('FC_bw')
 
     W1, W2, W3, B1, B2, B3 = ParamFC
     Z1, A1, Z2, A2, Z3, A3 = ParamFC_rt
@@ -292,12 +319,12 @@ def FC_bw(img, target, ParamFC, ParamFC_rt, ParamFC_bw):
     J0 = J
     J = 1/m * np.sum(Loss)
 
-    # print(target[0])
+    print("target:\n", target[0])
     print("Cost: ", J)
     
     J_dv = np.fabs(J-J0)
 
-    dZ3 = (A3 - target) / m
+    dZ3 = (A3 - target)
     dW3 = 1/m * np.dot(A2.T, dZ3)
     dB3 = 1/m * np.sum(dZ3, axis = 0, keepdims = True).T
 
@@ -318,9 +345,15 @@ def FC_bw(img, target, ParamFC, ParamFC_rt, ParamFC_bw):
     W1 = W1 - alpha * dW1
     B1 = B1 - alpha * dB1
 
-    # print(dX[0])
+    img = img - alpha * dX
 
-    cache = (dX, W1, B1, W2, B2, W3, B3, J, J_dv)
+    # print("dZ3:\n", dZ3[0])
+    # print("dZ2:\n", dZ2[0])
+    # print("dZ1:\n", dZ1[0])
+    # print("dX:\n", dX[0])
+    print("img_dX:\n", img[0])
+
+    cache = (img, W1, B1, W2, B2, W3, B3, J, J_dv)
     return cache
 
 def test(img, target, Param_conv1, Param_conv2, Param_FC):
@@ -373,10 +406,10 @@ def CNN(img, target):
     PoolingZoom1 = PoolStride[0]
     PoolingZoom2 = PoolStride[1]
 
-    Kernal_1 = dK1 = np.random.rand(c, Layer_conv[0], Fliter[0], Fliter[0])
-    Kernal_2 = dK2 = np.random.rand(Layer_conv[0], Layer_conv[1], Fliter[1], Fliter[1])
-    b_conv1 = dB_Conv1 = np.random.rand(Layer_conv[0], 1)
-    b_conv2 = dB_Conv2 = np.random.rand(Layer_conv[1], 1)
+    Kernal_1 = dK1 = np.random.rand(c, Layer_conv[0], Fliter[0], Fliter[0]) - 0.5
+    Kernal_2 = dK2 = np.random.rand(Layer_conv[0], Layer_conv[1], Fliter[1], Fliter[1]) - 0.5
+    b_conv1 = dB_Conv1 = np.random.rand(Layer_conv[0], 1) - 0.5
+    b_conv2 = dB_Conv2 = np.random.rand(Layer_conv[1], 1) - 0.5
 
     # Param of FullyConnectedNeuraNet
     m = img.shape[0]
@@ -389,11 +422,11 @@ def CNN(img, target):
     W2 = dW2 = np.random.randn(Layer_FC[0], Layer_FC[1])
     W3 = dW3 = np.random.randn(Layer_FC[1], Layer_FC[2])
 
-    B1 = dB1 = np.random.randn(Layer_FC[0], 1)
-    B2 = dB2 = np.random.randn(Layer_FC[1], 1)
-    B3 = dB3 = np.random.randn(Layer_FC[2], 1)
+    B1 = dB1 = np.random.randn(Layer_FC[0], 1) - 0.5
+    B2 = dB2 = np.random.randn(Layer_FC[1], 1) - 0.5
+    B3 = dB3 = np.random.randn(Layer_FC[2], 1) - 0.5
 
-    dX = np.zeros([m, n])
+    img_dX = dX = np.zeros([m, n])
     Z1 = dZ1 = np.zeros([m, Layer_FC[0]])
     A1 = dA1 = np.zeros([m, Layer_FC[0]])
     Z2 = dZ2 = np.zeros([m, Layer_FC[1]])
@@ -405,7 +438,7 @@ def CNN(img, target):
     J = 0
     J_dv = 0
 
-    alpha = 3
+    alpha = 0.003
     i = 0
 
     while(True):
@@ -422,7 +455,7 @@ def CNN(img, target):
         Param_FC = (W1, W2, W3, B1, B2, B3)
         ParamFC_rt = (Z1, A1, Z2, A2, Z3, A3)
         ParamFC_bw = (m, n, Layer_FC, dX, J, J_dv, Loss, alpha)
-        ParamUpdate_FCbw = (dX, W1, B1, W2, B2, W3, B3, J, J_dv)
+        ParamUpdate_FCbw = (img_dX, W1, B1, W2, B2, W3, B3, J, J_dv)
 
         ParamConv2_bw = (Padding[1], Kernal_2, b_conv2, ConvStride[1], alpha)
         ParamUpdate_Conv2bw = (Kernal_2, b_conv2)
@@ -437,20 +470,23 @@ def CNN(img, target):
 
         img_forFC = img_pool_2.reshape(m, n)
         ParamFC_rt = FC(img_forFC, Param_FC)
-        '''
+
         # test-Backword
         ParamUpdate_FCbw = FC_bw(img_forFC, target, Param_FC, ParamFC_rt, ParamFC_bw)
-        dX, W1, B1, W2, B2, W3, B3, J, J_dv = ParamUpdate_FCbw
-        dX = dX.reshape(np.shape(img_pool_2))
-
-        img_forConvbw2 = Pooling_bw(img_conv_2, dX, PoolStride[1])
-        img_forPoolbw1, ParamUpdate_Conv2bw = Conv_bw(img_forConvbw2, ParamConv2_bw)
+        img_dX, W1, B1, W2, B2, W3, B3, J, J_dv = ParamUpdate_FCbw
+        # print("dX:\n", dX)
+        img_dX = img_dX.reshape(np.shape(img_pool_2))
+        # print("img_dX_reshape:\n", img_dX)
+        
+        img_forConvbw2 = Pooling_bw(img_conv_2, img_dX, PoolStride[1])
+        
+        img_forPoolbw1, ParamUpdate_Conv2bw = Conv_bw(img_forConvbw2, img_im2col2, ParamConv2_bw)
         Kernal_2, b_conv2 = ParamUpdate_Conv2bw
 
         img_forConvbw1 = Pooling_bw(img_conv_1, img_forPoolbw1, PoolStride[0])
-        img_ending, ParamUpdate_Conv1bw = Conv_bw(img_forConvbw1, ParamConv1_bw)
+        img_ending, ParamUpdate_Conv1bw = Conv_bw(img_forConvbw1, img_im2col1, ParamConv1_bw)
         Kernal_1, b_conv1 = ParamUpdate_Conv1bw
-        '''
+
         if J_dv <= 0.0000001:
             break
 
@@ -478,11 +514,11 @@ def main():
 
     x_train, x_test, y_train, y_test = train_test_split(img, target_trans, test_size = 0.2)
     
-    # Param_conv1, Param_conv2, Param_FC = CNN(x_train, y_train)          # check
+    Param_conv1, Param_conv2, Param_FC = CNN(x_train, y_train)          # check
 
     # test(x_test, y_test, Param_conv1, Param_conv2, Param_FC)            # check
 
-    Param_conv1, Param_conv2, Param_FC = CNN(x_train[0].reshape(1,1,8,8), y_train[0])          # check
+    # Param_conv1, Param_conv2, Param_FC = CNN(x_train[0].reshape(1,1,8,8), y_train[0])          # check
 
     # plt.imshow(dataset.images[0])
     # plt.show()

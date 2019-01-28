@@ -176,8 +176,8 @@ def loop(x, y):
     return m
 
 def main():
-    x, y = make_moons(n_samples=1000,noise=0.1)
-    # x, y = make_circles(n_samples=1000,factor = 0.7,noise=0.05)
+    # x, y = make_moons(n_samples=1000,noise=0.1)
+    x, y = make_circles(n_samples=1000,factor = 0.7,noise=0.05)
 
     y = y.reshape([x.shape[0], 1])
 
@@ -188,7 +188,7 @@ def main():
         time = time + 1
         print('motherfucker')
     print('time = ', time)
-    '''
+    
     PLT = Visualize()
 
     for i in range(y.shape[0]):
@@ -199,6 +199,6 @@ def main():
 
     PLT.cross()
     PLT.show()
-    '''
+    
 
 main()
