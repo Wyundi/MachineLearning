@@ -1,0 +1,116 @@
+Data:
+    sklearn-digits sklearn手写数据集, split(0.2)
+    x_train(1437, 1, 8, 8)  y_train(1437, 10)
+    x_test(360, 1, 8, 8)    y_test(360, 10)
+CNN:
+    Conv:
+        img(1437, 1, 8, 8) conv kernal(1, 8, 3, 3) -> img_conv(1437, 8, 8, 8)
+        method:
+            img -> img_pad(1437, 1, 10, 10) -> img_im2col(1437, 1, 64, 9)
+            kernal -> kernal_c(1, 8, 9, 1)
+            img_im2col * kernal_c = img_conv(1437, 8, 64, 1) -> (1437, 8, 8, 8)
+
+    Pooling:
+        img(1437, 8, 8, 8) -> img_pool(1437, 8, 4, 4)
+        method:
+            max pooling
+
+    Conv:
+        img(1437, 8, 4, 4) conv kernal(8, 16, 3, 3) -> img_conv(1437, 8, 4, 4)
+        method:
+            img -> img_pad(1437, 8, 6, 6) -> img_im2col(1437, 8, 16, 9)
+            kernal -> kernal_c(8, 16, 9, 1)
+            img_im2col * kernal_c = img_conv(1437, 16, 16, 1) -> (1437, 16, 4, 4)
+
+    Pooling:
+        img(1437, 16, 4, 4) -> img_pool(1437, 16, 2, 2)
+        method:
+            max pooling
+
+    Img reshape:
+        img(1437, 16, 2, 2) -> img(1437, 64)
+
+    Fully Connected and backward:
+        Z1(1437, 16) = img(1437, 64) * W1(64, 16) + B1.T(16, 1)
+        A1(1437, 16) = ReLU(Z1)
+
+        Z2(1437, 16) = Z1 * W2(16, 16) + B2.T(16, 1)
+        A2(1437, 16) = ReLU(Z2)
+
+        Z3(1437, 10) = Z2 * W3(16, 10) + B3.T(10, 1)
+        A3(1437, 10) = Softmax(Z3)
+
+            method:
+                ReLU(z):
+                    np.where(z<0, 0, z)
+                Softmax(z):
+                    h = (exp(z - max)) / sum(exp(z - max), axis = 1)
+
+        Loss(1437, 10) = corssEntropy(A3, target)
+        J(1437, 10) = 1/m * sum(Loss) -> Cost
+
+        dZ3(1437, 10) = A3 - target
+        dW3(16, 10) = 1/m * (A2.T * dZ3)
+        dB3(10, 1) = sum(dZ3, axis = 0)
+
+        dZ2(1437, 16) = (dZ3 * W3.T) * np.where(Z2<0, 0, 1)
+        dW2(16, 16) = 1/m * (A1.T * dZ2)
+        dB2(16, 1) = sum(dZ2, axis = 0)
+
+        dZ1(1437, 16) = (dZ2 * W2.T) * np.where(Z1<0, 0, 1)
+        dW1(64, 16) = 1/m * (img.T * dZ1)
+        dB1(16, 1) = sum(dZ1, axis = 0)
+
+        dX(1437, 64) = (dZ1 * W1.T) * np.where(img<0, 0, 1)
+
+            method:
+                corssEntropy(A, target):
+                    temp = np.where(A * target == 0, A + 0.05, A * target)
+                    Loss = -log(temp)
+
+        Parameter Update:
+            W3 = W3 - alpha * dW3
+            B3 = B3 - alpha * dB3
+            W2 = W2 - alpha * dW2
+            B2 = B2 - alpha * dB2
+            W1 = W1 - alpha * dW1
+            B1 = B1 - alpha * dB1
+
+            img_dX(1437, 64) = img - alpha * dX
+
+    Img reshape:
+        img_dX(1437, 64) -> img_dX(1437, 16, 2, 2)
+
+    Pooling backward:
+        img_dX(1437, 16, 2, 2) -> img_pool_bw(1437, 16, 4, 4)
+        method:
+            mask = np.where(max(img), 1, 0)
+            img_pool_bw = mask * img_dX
+
+    Conv backward:
+        img_bw(1437, 16, 4, 4) -> img_Convbw(1437, 8, 4, 4)
+
+        dK = img_im2col.T(form Conv process) * img_bw
+        db = sum(img_bw, axis = (0, 2, 3))
+        kernal = kernal - alpha * dK
+        b_conv = b_conv - alpha * db
+
+        method:
+            img_Convbw = Conv(img_bw, kernal_r)
+
+    Pooling backward:
+        img_dX(1437, 8, 4, 4) -> img_pool_bw(1437, 8, 8, 8)
+        method:
+            mask = np.where(max(img), 1, 0)
+            img_pool_bw = mask * img_dX
+
+    Conv backward:
+        img_bw(1437, 8, 8, 8) -> img_Convbw(1437, 1, 8, 8)
+
+        dK = img_im2col.T(form Conv process) * img_bw
+        db = sum(img_bw, axis = (0, 2, 3))
+        kernal = kernal - alpha * dK
+        b_conv = b_conv - alpha * db
+
+        method:
+            img_Convbw = Conv(img_bw, kernal_r)

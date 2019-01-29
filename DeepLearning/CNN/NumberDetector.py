@@ -111,8 +111,8 @@ def Softmax(z):
     h = (np.exp(z - max)) / np.sum(np.exp(z - max), axis = 1, keepdims = True)
     return h
 
-def Softmax_Loss(A, target):
-    # print('Softmax_Loss')
+def CorssEntropy(A, target):
+    # print('CorssEntropy')
     temp = np.where(A * target == 0, A + 0.05, A * target)
     Loss = -np.log(temp)
     
@@ -148,6 +148,7 @@ def Conv(img, ParamConv):
             img_im2col[..., i*n_h+j, :] = img_pad[..., i:i+k_h, j:j+k_w].reshape(m, f_in, k_h*k_w)
 
     # print("img_im2col:\n", img_im2col[0][0])
+    print(img_im2col.shape)
 
     kernal = kernal.reshape(f_in, f_out, k_h*k_w, 1)
 
@@ -208,18 +209,6 @@ def Conv_bw(img_bw, img_im2col, ParamConv_bw):
     dK = 1/m * np.sum(dK, axis = 0).reshape(kernal_shape)
     # print("dK:\n", dK[0][0])
     # print("kernal:\n", kernal[0][0])
-
-    # kernal = kernal.reshape(kernal_shape)
-    # dK = np.sum(img_im2colbw, axis = (0, 2)).reshape((f_out, k_h, k_w))
-    # print(np.sum(img_im2colbw, axis = (0, 2)).shape, np.sum(img_im2col, axis = (0, 2)).shape, kernal.shape)
-    # temp0 = np.sum(img_im2colbw, axis = (0, 2)).reshape(1, f_out, k_h, k_w)
-    # temp1 =  np.sum(img_im2col, axis = (0, 2)).reshape(f_in, 1, k_h, k_w)
-    # dK = temp0 * temp1
-    # print(dK.shape)
-    # dK = np.dot(np.sum(img_bw, axis = 0).reshape(f_out, ib_h * ib_w), np.sum(img_im2col, axis = (0, 2))).reshape((f_out, k_h, k_w))
-    
-    # img_bw_reshape = img_bw.transpose(1, 2, 3, 0).reshape(f_in, -1)
-    # dK = img_bw_reshape.dot(img_im2col.T).reshape(kernal_shape)
     
     db = np.sum(img_bw, axis = (0, 2, 3)).reshape(b_conv_shape)
 
@@ -301,6 +290,7 @@ def FC(img, ParamFC):
     Z3 = np.dot(A2, W3) + B3.T
     A3 = Softmax(Z3)
 
+    print(W1.shape, B1.shape)
     print("Z3:\n", Z3[0])
     print("A3:\n", A3[0])
     
@@ -314,7 +304,7 @@ def FC_bw(img, target, ParamFC, ParamFC_rt, ParamFC_bw):
     Z1, A1, Z2, A2, Z3, A3 = ParamFC_rt
     m, n, Layer_FC, dX, J, J_dv, Loss, alpha = ParamFC_bw
 
-    Loss = Softmax_Loss(A3, target)
+    Loss = CorssEntropy(A3, target)
 
     J0 = J
     J = 1/m * np.sum(Loss)
