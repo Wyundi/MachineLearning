@@ -7,6 +7,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 
 Feature = 7
+Sort = 3
 
 def Sigmoid(z):
     return 1 / (1 + np.exp(-z))
@@ -14,22 +15,22 @@ def Sigmoid(z):
 def ReLU(z):
     return np.where(z<0, 0, z)
 
-def Softmax(z):                                         ######## that's it
+def Softmax(z):
     max = np.max(z,axis = 1,keepdims = True)
     h = (np.exp(z - max)) / np.sum(np.exp(z - max), axis = 1, keepdims = True)
     return h
 
 def CorssEntropy(A, target):
     # print('CorssEntropy')
-    temp = np.where(A * target == 0, A + 0.05, A * target)
-    Loss = -np.log(temp)
+    A = np.where(A == 0, 0.05, A)
+    Loss = - target * np.log(A)
     
     return Loss
 
 def NeuralNet(X, y):
     m = X.shape[0]
     n = X.shape[1]
-    Layer = np.array([4, 6, 6, 4, Feature])
+    Layer = np.array([4, 6, 6, 4, Sort])
 
     W1 = np.random.rand(n, Layer[0])
     W2 = np.random.rand(Layer[0], Layer[1])
@@ -161,7 +162,7 @@ def main():
     y = data[:, -1].reshape(data.shape[0], 1).astype('int64')
     # print(x.shape, y.shape)
 
-    y_trans = np.zeros(x.shape)
+    y_trans = np.zeros((x.shape[0], Sort))
 
     for i in range(y.shape[0]):
         y_trans[i, y[i]] = 1

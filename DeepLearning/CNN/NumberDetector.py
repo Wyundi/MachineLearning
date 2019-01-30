@@ -113,8 +113,8 @@ def Softmax(z):
 
 def CorssEntropy(A, target):
     # print('CorssEntropy')
-    temp = np.where(A * target == 0, A + 0.05, A * target)
-    Loss = -np.log(temp)
+    A = np.where(A == 0, 0.05, A)
+    Loss = - target * np.log(A)
     
     return Loss
 
@@ -148,7 +148,7 @@ def Conv(img, ParamConv):
             img_im2col[..., i*n_h+j, :] = img_pad[..., i:i+k_h, j:j+k_w].reshape(m, f_in, k_h*k_w)
 
     # print("img_im2col:\n", img_im2col[0][0])
-    print(img_im2col.shape)
+    # print(img_im2col.shape)
 
     kernal = kernal.reshape(f_in, f_out, k_h*k_w, 1)
 
@@ -277,9 +277,9 @@ def Pooling_bw(img, img_dX, stride):
     return img_pool_bw
 
 def FC(img, ParamFC):
-    print('FC')
+    # print('FC')
 
-    print("img[0]:\n", img[0])
+    # print("img[0]:\n", img[0])
 
     W1, W2, W3, B1, B2, B3 = ParamFC
 
@@ -290,15 +290,15 @@ def FC(img, ParamFC):
     Z3 = np.dot(A2, W3) + B3.T
     A3 = Softmax(Z3)
 
-    print(W1.shape, B1.shape)
-    print("Z3:\n", Z3[0])
-    print("A3:\n", A3[0])
+    # print(W1.shape, B1.shape)
+    # print("Z3:\n", Z3[0])
+    # print("A3:\n", A3[0])
     
     cache = (Z1, A1, Z2, A2, Z3, A3)
     return cache
 
 def FC_bw(img, target, ParamFC, ParamFC_rt, ParamFC_bw):
-    print('FC_bw')
+    # print('FC_bw')
 
     W1, W2, W3, B1, B2, B3 = ParamFC
     Z1, A1, Z2, A2, Z3, A3 = ParamFC_rt
@@ -309,7 +309,7 @@ def FC_bw(img, target, ParamFC, ParamFC_rt, ParamFC_bw):
     J0 = J
     J = 1/m * np.sum(Loss)
 
-    print("target:\n", target[0])
+    # print("target:\n", target[0])
     print("Cost: ", J)
     
     J_dv = np.fabs(J-J0)
@@ -341,7 +341,7 @@ def FC_bw(img, target, ParamFC, ParamFC_rt, ParamFC_bw):
     # print("dZ2:\n", dZ2[0])
     # print("dZ1:\n", dZ1[0])
     # print("dX:\n", dX[0])
-    print("img_dX:\n", img[0])
+    # print("img_dX:\n", img[0])
 
     cache = (img, W1, B1, W2, B2, W3, B3, J, J_dv)
     return cache
@@ -428,14 +428,14 @@ def CNN(img, target):
     J = 0
     J_dv = 0
 
-    alpha = 0.003
+    alpha = 0.03
     i = 0
 
     while(True):
-        
+        '''
         if i == 1:
             break
-        
+        '''
 
         i = i + 1
         # All Parameter
@@ -506,7 +506,7 @@ def main():
     
     Param_conv1, Param_conv2, Param_FC = CNN(x_train, y_train)          # check
 
-    # test(x_test, y_test, Param_conv1, Param_conv2, Param_FC)            # check
+    test(x_test, y_test, Param_conv1, Param_conv2, Param_FC)            # check
 
     # Param_conv1, Param_conv2, Param_FC = CNN(x_train[0].reshape(1,1,8,8), y_train[0])          # check
 
