@@ -65,8 +65,8 @@ CNN:
 
             method:
                 corssEntropy(A, target):
-                    temp = np.where(A * target == 0, A + 0.05, A * target)
-                    Loss = -log(temp)
+                    A = np.where(A == 0, 1e-8, A)
+                    Loss = - target * np.log(A)
 
         Parameter Update:
             W3 = W3 - alpha * dW3
