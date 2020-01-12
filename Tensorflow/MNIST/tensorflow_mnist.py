@@ -52,7 +52,7 @@ model = keras.Sequential([
 
 # 编译模型
 # 优化器 - 损失函数 - 指标(准确率)
-model.compile(optimizer=tf.train.AdamOptimizer(),
+model.compile(optimizer=tf.optimizers.Adam(),
               loss='sparse_categorical_crossentropy',
               metrics=['accuracy'])
 

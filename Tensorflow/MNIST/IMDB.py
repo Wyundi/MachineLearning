@@ -55,7 +55,7 @@ model.add(keras.layers.Dense(1, activation=tf.nn.sigmoid))
 
 model.summary()
 
-model.compile(optimizer=tf.train.AdamOptimizer(),
+model.compile(optimizer=tf.optimizers.Adam(),
               loss='binary_crossentropy',
               metrics=['accuracy'])
 
